@@ -28,9 +28,7 @@
 	const provinces = Object.keys(LOCATIONS);
 	let cities = $derived(province ? LOCATIONS[province] ?? [] : []);
 
-	$effect(() => {
-		if (province) city = '';
-	});
+	function onProvinceChange() { city = ''; }
 
 	function validateStep(s: number) {
 		if (s === 1) {
@@ -185,7 +183,7 @@
 					<div class="space-y-5">
 						<div>
 							<label class="label" for="province">Provinsi <span class="text-red-400">*</span></label>
-							<select id="province" class="select" bind:value={province}>
+							<select id="province" class="select" bind:value={province} onchange={onProvinceChange}>
 								<option value="">-- Pilih Provinsi --</option>
 								{#each provinces as p}
 									<option value={p}>{p}</option>

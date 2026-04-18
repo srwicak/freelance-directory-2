@@ -23,10 +23,7 @@
 	const provinces = Object.keys(LOCATIONS);
 	let cities = $derived(province ? LOCATIONS[province] ?? [] : []);
 
-	let prevProvince = '';
-	$effect(() => {
-		if (province !== prevProvince) { city = ''; prevProvince = province; }
-	});
+	function onProvinceChange() { city = ''; }
 
 	onMount(async () => {
 		if (!auth.userId) { notLoggedIn = true; loading = false; return; }
@@ -117,7 +114,7 @@
 			<div class="grid grid-cols-2 gap-4">
 				<div>
 					<label class="label" for="province">Provinsi <span class="text-red-400">*</span></label>
-					<select id="province" class="select" bind:value={province}>
+					<select id="province" class="select" bind:value={province} onchange={onProvinceChange}>
 						{#each provinces as p}
 							<option value={p}>{p}</option>
 						{/each}
