@@ -7,7 +7,8 @@
 
 	type Post = {
 		id: string; type: string; title: string; description: string;
-		field: string | null; image_url: string | null; created_at: number;
+		field: string | null; image_url: string | null; link_url: string | null;
+		required_skills: string | null; created_at: number;
 		expires_at: number; edit_count: number; thumbs_up: number; thumbs_down: number;
 		user_id: string;
 		author: { id: string; name: string; field: string; province: string; city: string; linkedin: string; portfolio: string | null; details: string | null } | null;
@@ -27,8 +28,29 @@
 	let editDesc = $state('');
 	let editField = $state('');
 	let editImg = $state('');
+	let editLink = $state('');
 	let editError = $state('');
 	let editLoading = $state(false);
+
+	// Tag input for edit
+	const MAX_SKILLS = 5;
+	let editTags = $state<string[]>([]);
+	let editTagInput = $state('');
+	let editCanAdd = $derived(editTags.length < MAX_SKILLS);
+	let editSkillsString = $derived(editTags.join(','));
+
+	function addEditTag() {
+		const val = editTagInput.trim();
+		if (!val || !editCanAdd) return;
+		if (editTags.includes(val)) { editTagInput = ''; return; }
+		editTags = [...editTags, val];
+		editTagInput = '';
+	}
+	function removeEditTag(i: number) { editTags = editTags.filter((_, idx) => idx !== i); }
+	function onEditTagKeydown(e: KeyboardEvent) {
+		if (e.key === ',' || e.key === 'Enter') { e.preventDefault(); addEditTag(); }
+		else if (e.key === 'Backspace' && editTagInput === '' && editTags.length > 0) editTags = editTags.slice(0, -1);
+	}
 
 	const postId = page.params.id ?? '';
 	const isOwner = $derived(!!auth.userId && !!post && auth.userId === post.user_id);
@@ -75,6 +97,11 @@
 		editDesc = post.description;
 		editField = post.field ?? '';
 		editImg = post.image_url ?? '';
+		editLink = post.link_url ?? '';
+		editTags = post.required_skills
+			? post.required_skills.split(',').map(s => s.trim()).filter(Boolean).slice(0, 5)
+			: [];
+		editTagInput = '';
 		showEdit = true;
 	}
 
@@ -84,7 +111,7 @@
 		editError = '';
 		editLoading = true;
 		try {
-			await api.editOpportunity(postId, auth.userId as string, { title: editTitle, description: editDesc, field: editField, image_url: editImg });
+			await api.editOpportunity(postId, auth.userId as string, { title: editTitle, description: editDesc, field: editField, image_url: editImg, link_url: editLink, required_skills: editSkillsString || undefined });
 			const updated = await api.getOpportunityById(postId);
 			if (updated) post = updated;
 			showEdit = false;
@@ -135,7 +162,38 @@
 				</div>
 				<div>
 					<label class="label" for="edit-desc">Deskripsi</label>
-					<textarea id="edit-desc" class="textarea" rows="6" bind:value={editDesc} maxlength="3000"></textarea>
+					<textarea id="edit-desc" class="textarea" rows="5" bind:value={editDesc} maxlength="3000"></textarea>
+				</div>
+				<div>
+					<label class="label" for="edit-tag-input">
+						Keahlian
+						<span class="text-gray-500 text-xs">(opsional · {editTags.length}/{MAX_SKILLS})</span>
+					</label>
+					<div class="flex flex-wrap gap-1.5 p-3 rounded-xl bg-gray-800 border border-gray-700 focus-within:ring-2 focus-within:ring-brand-500 focus-within:border-transparent transition-all min-h-[48px]">
+						{#each editTags as tag, i}
+							<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-brand-900/70 text-brand-300 border border-brand-700/50">
+								{tag}
+								<button type="button" onclick={() => removeEditTag(i)} class="text-brand-400 hover:text-white leading-none">×</button>
+							</span>
+						{/each}
+						{#if editCanAdd}
+							<input
+								id="edit-tag-input"
+								type="text"
+								class="flex-1 min-w-[120px] bg-transparent outline-none text-sm text-gray-100 placeholder-gray-500"
+								placeholder={editTags.length === 0 ? 'Ketik lalu tekan Enter atau koma...' : 'Tambah keahlian...'}
+								bind:value={editTagInput}
+								onkeydown={onEditTagKeydown}
+								onblur={addEditTag}
+							/>
+						{:else}
+							<span class="text-xs text-gray-500 self-center">Maks {MAX_SKILLS} keahlian tercapai</span>
+						{/if}
+					</div>
+				</div>
+				<div>
+					<label class="label" for="edit-link">Link Pekerjaan</label>
+					<input id="edit-link" class="input" type="url" bind:value={editLink} placeholder="https://..." />
 				</div>
 				<div>
 					<label class="label" for="edit-img">URL Gambar</label>
@@ -211,8 +269,33 @@
 				<img src={post.image_url} alt="Post" class="w-full rounded-xl mb-6 max-h-64 object-cover" />
 			{/if}
 
+			<!-- Skills -->
+			{#if post.required_skills}
+				<div class="mb-5">
+					<p class="text-xs text-gray-500 uppercase tracking-wide mb-2">Keahlian yang Dibutuhkan</p>
+					<div class="flex flex-wrap gap-1.5">
+						{#each post.required_skills.split(',').filter(Boolean) as skill}
+							<span class="badge-purple">{skill.trim()}</span>
+						{/each}
+					</div>
+				</div>
+			{/if}
+
 			<!-- Description -->
-			<div class="text-gray-300 leading-relaxed whitespace-pre-wrap mb-6">{post.description}</div>
+			<div class="text-gray-300 leading-relaxed whitespace-pre-wrap mb-5">{post.description}</div>
+
+			<!-- Link pekerjaan -->
+			{#if post.link_url}
+				<a
+					href={post.link_url}
+					target="_blank"
+					rel="noopener noreferrer"
+					class="inline-flex items-center gap-2 mb-5 px-4 py-2.5 rounded-xl bg-brand-900/40 border border-brand-700/50 text-brand-300 text-sm hover:bg-brand-900/60 transition-colors"
+				>
+					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+					Lihat Detail Pekerjaan
+				</a>
+			{/if}
 
 			<!-- Meta -->
 			<div class="text-sm text-gray-500 flex flex-wrap gap-x-4 gap-y-1 mb-6">

@@ -9,9 +9,39 @@
 	let description = $state('');
 	let field = $state('');
 	let image_url = $state('');
+	let link_url = $state('');
 	let days = $state(14);
 	let loading = $state(false);
 	let error = $state('');
+
+	// Tag input — max 5 skills
+	const MAX_SKILLS = 5;
+	let tags = $state<string[]>([]);
+	let tagInput = $state('');
+	let canAddMore = $derived(tags.length < MAX_SKILLS);
+
+	function addTag() {
+		const val = tagInput.trim();
+		if (!val || !canAddMore) return;
+		if (tags.includes(val)) { tagInput = ''; return; }
+		tags = [...tags, val];
+		tagInput = '';
+	}
+
+	function removeTag(i: number) {
+		tags = tags.filter((_, idx) => idx !== i);
+	}
+
+	function onTagKeydown(e: KeyboardEvent) {
+		if (e.key === ',' || e.key === 'Enter') {
+			e.preventDefault();
+			addTag();
+		} else if (e.key === 'Backspace' && tagInput === '' && tags.length > 0) {
+			tags = tags.slice(0, -1);
+		}
+	}
+
+	let skillsString = $derived(tags.join(','));
 
 	// Auth modal
 	let showAuthModal = $state(false);
@@ -46,6 +76,8 @@
 				description: description.trim(),
 				field: field || undefined,
 				image_url: image_url.trim() || undefined,
+				link_url: link_url.trim() || undefined,
+				required_skills: skillsString || undefined,
 				days
 			});
 			goto(`/board/${res.id}`);
@@ -136,6 +168,42 @@
 					<option value={d}>{d}</option>
 				{/each}
 			</select>
+		</div>
+
+		<!-- Link URL -->
+		<div>
+			<label class="label" for="link">Link Pekerjaan <span class="text-gray-500 text-xs">(opsional)</span></label>
+			<input id="link" class="input" type="url" bind:value={link_url} placeholder="https://..." />
+			<p class="text-xs text-gray-500 mt-1">Link ke detail proyek, brief, atau halaman rekrutmen</p>
+		</div>
+
+		<!-- Required Skills -->
+		<div>
+			<label class="label" for="tag-input">
+				{type === 'JOB' ? 'Keahlian yang Dibutuhkan' : 'Keahlian yang Ditawarkan'}
+				<span class="text-gray-500 text-xs">(opsional · {tags.length}/{MAX_SKILLS})</span>
+			</label>
+			<div class="flex flex-wrap gap-1.5 p-3 rounded-xl bg-gray-800 border border-gray-700 focus-within:ring-2 focus-within:ring-brand-500 focus-within:border-transparent transition-all min-h-[48px]">
+				{#each tags as tag, i}
+					<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-brand-900/70 text-brand-300 border border-brand-700/50">
+						{tag}
+						<button type="button" onclick={() => removeTag(i)} class="text-brand-400 hover:text-white leading-none">×</button>
+					</span>
+				{/each}
+				{#if canAddMore}
+					<input
+						id="tag-input"
+						type="text"
+						class="flex-1 min-w-[120px] bg-transparent outline-none text-sm text-gray-100 placeholder-gray-500"
+						placeholder={tags.length === 0 ? 'Ketik lalu tekan Enter atau koma...' : 'Tambah keahlian...'}
+						bind:value={tagInput}
+						onkeydown={onTagKeydown}
+						onblur={addTag}
+					/>
+				{:else}
+					<span class="text-xs text-gray-500 self-center">Maks {MAX_SKILLS} keahlian tercapai</span>
+				{/if}
+			</div>
 		</div>
 
 		<!-- Image URL -->

@@ -5,23 +5,35 @@
 
 	type Opportunity = {
 		id: string; type: string; title: string; description: string;
-		field: string | null; image_url: string | null; created_at: number;
+		field: string | null; image_url: string | null; link_url: string | null;
+		required_skills: string | null; created_at: number;
 		expires_at: number; edit_count: number; thumbs_up: number; thumbs_down: number;
 		user_id: string; author_name: string; author_field: string; author_province: string;
 	};
 
 	let activeTab = $state<'JOB' | 'TALENT'>('JOB');
 	let fieldFilter = $state('');
+	let skillFilter = $state('');
+	let skillInput = $state('');
 	let items = $state<Opportunity[]>([]);
 	let loading = $state(true);
 	let loadingMore = $state(false);
 	let hasMore = $state(false);
 	let page = $state(1);
 
+	let skillTimeout: ReturnType<typeof setTimeout>;
+	function onSkillInput() {
+		clearTimeout(skillTimeout);
+		skillTimeout = setTimeout(() => {
+			skillFilter = skillInput.trim();
+			load(true);
+		}, 400);
+	}
+
 	async function load(reset = false) {
 		if (reset) { page = 1; loading = true; }
 		try {
-			const res = await api.getOpportunities({ type: activeTab, page, limit: 20, fieldFilter });
+			const res = await api.getOpportunities({ type: activeTab, page, limit: 20, fieldFilter, skillFilter });
 			if (reset || page === 1) items = res.items;
 			else items = [...items, ...res.items];
 			hasMore = res.hasMore;
@@ -93,7 +105,7 @@
 	</div>
 
 	<!-- Tabs + filter -->
-	<div class="flex flex-col sm:flex-row gap-3 mb-6">
+	<div class="flex flex-col sm:flex-row gap-3 mb-3">
 		<div class="flex bg-gray-900 border border-gray-800 rounded-xl p-1 gap-1">
 			<button
 				class="flex-1 px-4 py-2 rounded-lg text-sm font-semibold transition-all {activeTab === 'JOB' ? 'bg-brand-600 text-white' : 'text-gray-400 hover:text-gray-200'}"
@@ -110,6 +122,21 @@
 				<option value={d}>{d}</option>
 			{/each}
 		</select>
+	</div>
+
+	<!-- Skill filter -->
+	<div class="relative mb-6">
+		<svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+		<input
+			class="input pl-10 sm:max-w-xs"
+			type="text"
+			placeholder="Filter keahlian (mis. React, Figma...)"
+			bind:value={skillInput}
+			oninput={onSkillInput}
+		/>
+		{#if skillFilter}
+			<button class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 text-xs" onclick={() => { skillInput = ''; skillFilter = ''; load(true); }}>✕ reset</button>
+		{/if}
 	</div>
 
 	<!-- Cards -->
@@ -165,12 +192,20 @@
 						</div>
 					{/if}
 
-					<!-- Field -->
-					{#if item.field}
-						<div class="mb-3">
+					<!-- Field + Skills -->
+					<div class="flex flex-wrap gap-1.5 mb-3">
+						{#if item.field}
 							<span class="badge bg-gray-800 text-gray-400 border border-gray-700 text-xs">{item.field}</span>
-						</div>
-					{/if}
+						{/if}
+						{#if item.required_skills}
+							{#each item.required_skills.split(',').filter(Boolean) as skill}
+								<button
+									class="badge-purple text-xs cursor-pointer hover:bg-brand-800/60 transition-colors"
+									onclick={(e) => { e.stopPropagation(); skillInput = skill.trim(); skillFilter = skill.trim(); load(true); }}
+								>{skill.trim()}</button>
+							{/each}
+						{/if}
+					</div>
 
 					<!-- Footer -->
 					<div class="pt-3 border-t border-gray-800 flex items-center justify-between">

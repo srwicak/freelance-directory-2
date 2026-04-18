@@ -137,7 +137,7 @@ export async function getActivePostCount(env: Env, userId: string) {
 
 export async function createOpportunity(
 	env: Env,
-	data: { user_id: string; type: 'JOB' | 'TALENT'; title: string; description: string; field?: string; image_url?: string; days?: number }
+	data: { user_id: string; type: 'JOB' | 'TALENT'; title: string; description: string; field?: string; image_url?: string; link_url?: string; required_skills?: string; days?: number }
 ) {
 	const db = getDb(env);
 	const count = await getActivePostCount(env, data.user_id);
@@ -147,6 +147,11 @@ export async function createOpportunity(
 	const now = Math.floor(Date.now() / 1000);
 	const id = nanoid(10);
 
+	// Normalize skills: trim, max 5, remove empty
+	const skills = data.required_skills
+		? data.required_skills.split(',').map(s => s.trim()).filter(Boolean).slice(0, 5).join(',')
+		: null;
+
 	await db.insert(opportunities).values({
 		id,
 		user_id: data.user_id,
@@ -155,6 +160,8 @@ export async function createOpportunity(
 		description: data.description,
 		field: data.field ?? null,
 		image_url: data.image_url ?? null,
+		link_url: data.link_url ?? null,
+		required_skills: skills,
 		created_at: now,
 		expires_at: now + days * 86400,
 		edit_count: 0,
@@ -168,13 +175,17 @@ export async function editOpportunity(
 	env: Env,
 	id: string,
 	userId: string,
-	data: { title: string; description: string; field?: string; image_url?: string }
+	data: { title: string; description: string; field?: string; image_url?: string; link_url?: string; required_skills?: string }
 ) {
 	const db = getDb(env);
 	const post = await db.select().from(opportunities).where(eq(opportunities.id, id)).get();
 	if (!post) throw new Error('Post tidak ditemukan');
 	if (post.user_id !== userId) throw new Error('Tidak punya akses');
 	if (post.edit_count >= 3) throw new Error('Batas edit (3x) sudah tercapai');
+
+	const skills = data.required_skills
+		? data.required_skills.split(',').map(s => s.trim()).filter(Boolean).slice(0, 5).join(',')
+		: null;
 
 	await db
 		.update(opportunities)
@@ -183,6 +194,8 @@ export async function editOpportunity(
 			description: data.description,
 			field: data.field ?? null,
 			image_url: data.image_url ?? null,
+			link_url: data.link_url ?? null,
+			required_skills: skills,
 			edit_count: post.edit_count + 1
 		})
 		.where(eq(opportunities.id, id));
@@ -201,7 +214,7 @@ export async function deleteOpportunity(env: Env, id: string, userId: string) {
 
 export async function getOpportunities(
 	env: Env,
-	{ type, page = 1, limit = 20, fieldFilter = '' }: { type?: string; page?: number; limit?: number; fieldFilter?: string }
+	{ type, page = 1, limit = 20, fieldFilter = '', skillFilter = '' }: { type?: string; page?: number; limit?: number; fieldFilter?: string; skillFilter?: string }
 ) {
 	const db = getDb(env);
 	const now = Math.floor(Date.now() / 1000);
@@ -209,6 +222,7 @@ export async function getOpportunities(
 	const conditions = [gt(opportunities.expires_at, now)];
 	if (type) conditions.push(eq(opportunities.type, type));
 	if (fieldFilter) conditions.push(eq(opportunities.field, fieldFilter));
+	if (skillFilter) conditions.push(like(opportunities.required_skills, `%${skillFilter}%`));
 
 	const rows = await db
 		.select({
