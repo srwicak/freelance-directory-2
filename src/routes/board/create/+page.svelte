@@ -10,6 +10,7 @@
 	let field = $state('');
 	let image_url = $state('');
 	let link_url = $state('');
+	let budget = $state('');
 	let days = $state(14);
 	let loading = $state(false);
 	let error = $state('');
@@ -78,6 +79,7 @@
 				image_url: image_url.trim() || undefined,
 				link_url: link_url.trim() || undefined,
 				required_skills: skillsString || undefined,
+				budget: budget.trim() || undefined,
 				days
 			});
 			goto(`/board/${res.id}`);
@@ -168,6 +170,13 @@
 					<option value={d}>{d}</option>
 				{/each}
 			</select>
+		</div>
+
+		<!-- Budget -->
+		<div>
+			<label class="label" for="budget">Budget / Rate <span class="text-gray-500 text-xs">(opsional)</span></label>
+			<input id="budget" class="input" type="text" bind:value={budget} placeholder='mis. "Rp 5jt/proyek", "$50-80/jam", "Nego"' maxlength="60" />
+			<p class="text-xs text-gray-500 mt-1">{budget.length}/60</p>
 		</div>
 
 		<!-- Link URL -->

@@ -8,7 +8,7 @@
 	type Post = {
 		id: string; type: string; title: string; description: string;
 		field: string | null; image_url: string | null; link_url: string | null;
-		required_skills: string | null; created_at: number;
+		required_skills: string | null; budget: string | null; created_at: number;
 		expires_at: number; edit_count: number; thumbs_up: number; thumbs_down: number;
 		user_id: string;
 		author: { id: string; name: string; field: string; province: string; city: string; linkedin: string; portfolio: string | null; details: string | null } | null;
@@ -29,6 +29,7 @@
 	let editField = $state('');
 	let editImg = $state('');
 	let editLink = $state('');
+	let editBudget = $state('');
 	let editError = $state('');
 	let editLoading = $state(false);
 
@@ -98,6 +99,7 @@
 		editField = post.field ?? '';
 		editImg = post.image_url ?? '';
 		editLink = post.link_url ?? '';
+		editBudget = post.budget ?? '';
 		editTags = post.required_skills
 			? post.required_skills.split(',').map(s => s.trim()).filter(Boolean).slice(0, 5)
 			: [];
@@ -111,7 +113,7 @@
 		editError = '';
 		editLoading = true;
 		try {
-			await api.editOpportunity(postId, auth.userId as string, { title: editTitle, description: editDesc, field: editField, image_url: editImg, link_url: editLink, required_skills: editSkillsString || undefined });
+			await api.editOpportunity(postId, auth.userId as string, { title: editTitle, description: editDesc, field: editField, image_url: editImg, link_url: editLink, required_skills: editSkillsString || undefined, budget: editBudget.trim() || undefined });
 			const updated = await api.getOpportunityById(postId);
 			if (updated) post = updated;
 			showEdit = false;
@@ -192,6 +194,10 @@
 					</div>
 				</div>
 				<div>
+					<label class="label" for="edit-budget">Budget / Rate</label>
+					<input id="edit-budget" class="input" type="text" bind:value={editBudget} placeholder='mis. "Rp 5jt/proyek", "$50-80/jam"' maxlength="60" />
+				</div>
+				<div>
 					<label class="label" for="edit-link">Link Pekerjaan</label>
 					<input id="edit-link" class="input" type="url" bind:value={editLink} placeholder="https://..." />
 				</div>
@@ -262,7 +268,15 @@
 				{/if}
 			</div>
 
-			<h1 class="text-2xl font-bold text-white mb-4">{post.title}</h1>
+			<h1 class="text-2xl font-bold text-white mb-3">{post.title}</h1>
+
+			<!-- Budget -->
+			{#if post.budget}
+				<div class="inline-flex items-center gap-1.5 mb-4 px-3 py-1.5 rounded-lg bg-green-900/30 border border-green-700/40 text-green-300 text-sm font-medium">
+					<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+					{post.budget}
+				</div>
+			{/if}
 
 			<!-- Image -->
 			{#if post.image_url}
@@ -272,7 +286,9 @@
 			<!-- Skills -->
 			{#if post.required_skills}
 				<div class="mb-5">
-					<p class="text-xs text-gray-500 uppercase tracking-wide mb-2">Keahlian yang Dibutuhkan</p>
+					<p class="text-xs text-gray-500 uppercase tracking-wide mb-2">
+						{post.type === 'JOB' ? 'Keahlian yang Dibutuhkan' : 'Keahlian yang Ditawarkan'}
+					</p>
 					<div class="flex flex-wrap gap-1.5">
 						{#each post.required_skills.split(',').filter(Boolean) as skill}
 							<span class="badge-purple">{skill.trim()}</span>
@@ -281,20 +297,37 @@
 				</div>
 			{/if}
 
-			<!-- Description -->
-			<div class="text-gray-300 leading-relaxed whitespace-pre-wrap mb-5">{post.description}</div>
+			<!-- Description: JOB posts hide for non-login -->
+			{#if post.type === 'JOB' && !auth.userId}
+				<div class="relative mb-5">
+					<div class="text-gray-300 leading-relaxed whitespace-pre-wrap line-clamp-3 select-none blur-sm pointer-events-none">{post.description}</div>
+					<div class="absolute inset-0 flex flex-col items-center justify-center bg-gray-950/60 rounded-xl backdrop-blur-[2px]">
+						<p class="text-sm text-gray-300 font-medium mb-3">Masuk untuk membaca deskripsi lengkap</p>
+						<a href="/register" class="btn-primary text-sm">Daftar / Masuk</a>
+					</div>
+				</div>
+			{:else}
+				<div class="text-gray-300 leading-relaxed whitespace-pre-wrap mb-5">{post.description}</div>
+			{/if}
 
-			<!-- Link pekerjaan -->
+			<!-- Link pekerjaan: hide for non-login on JOB posts -->
 			{#if post.link_url}
-				<a
-					href={post.link_url}
-					target="_blank"
-					rel="noopener noreferrer"
-					class="inline-flex items-center gap-2 mb-5 px-4 py-2.5 rounded-xl bg-brand-900/40 border border-brand-700/50 text-brand-300 text-sm hover:bg-brand-900/60 transition-colors"
-				>
-					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-					Lihat Detail Pekerjaan
-				</a>
+				{#if post.type === 'JOB' && !auth.userId}
+					<div class="inline-flex items-center gap-2 mb-5 px-4 py-2.5 rounded-xl bg-gray-800 border border-gray-700 text-gray-500 text-sm cursor-not-allowed select-none">
+						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+						Link tersedia setelah login
+					</div>
+				{:else}
+					<a
+						href={post.link_url}
+						target="_blank"
+						rel="noopener noreferrer"
+						class="inline-flex items-center gap-2 mb-5 px-4 py-2.5 rounded-xl bg-brand-900/40 border border-brand-700/50 text-brand-300 text-sm hover:bg-brand-900/60 transition-colors"
+					>
+						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+						Lihat Detail Pekerjaan
+					</a>
+				{/if}
 			{/if}
 
 			<!-- Meta -->
@@ -351,7 +384,12 @@
 							{/if}
 						</div>
 					{:else}
-						<p class="text-xs text-gray-600 mt-3">Login untuk melihat kontak pembuat</p>
+						<div class="mt-4 p-3 rounded-xl bg-gray-800/60 border border-gray-700 flex items-center justify-between gap-3">
+							<p class="text-sm text-gray-400">
+								{post.type === 'TALENT' ? 'Daftar untuk melihat kontak & cara menghubungi' : 'Masuk untuk melihat kontak pembuat'}
+							</p>
+							<a href="/register" class="btn-primary text-xs py-1.5 px-3 whitespace-nowrap">Daftar / Masuk</a>
+						</div>
 					{/if}
 				</div>
 			{/if}

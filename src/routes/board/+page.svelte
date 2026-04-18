@@ -6,7 +6,7 @@
 	type Opportunity = {
 		id: string; type: string; title: string; description: string;
 		field: string | null; image_url: string | null; link_url: string | null;
-		required_skills: string | null; created_at: number;
+		required_skills: string | null; budget: string | null; created_at: number;
 		expires_at: number; edit_count: number; thumbs_up: number; thumbs_down: number;
 		user_id: string; author_name: string; author_field: string; author_province: string;
 	};
@@ -179,6 +179,11 @@
 
 					<!-- Title -->
 					<h3 class="font-semibold text-gray-100 mb-2 line-clamp-2 leading-snug">{item.title}</h3>
+
+					<!-- Budget -->
+					{#if item.budget}
+						<p class="text-xs text-green-400 font-medium mb-2">{item.budget}</p>
+					{/if}
 
 					<!-- Description -->
 					<p class="text-sm text-gray-400 line-clamp-3 mb-3 flex-1">{item.description}</p>

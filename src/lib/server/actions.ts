@@ -137,7 +137,7 @@ export async function getActivePostCount(env: Env, userId: string) {
 
 export async function createOpportunity(
 	env: Env,
-	data: { user_id: string; type: 'JOB' | 'TALENT'; title: string; description: string; field?: string; image_url?: string; link_url?: string; required_skills?: string; days?: number }
+	data: { user_id: string; type: 'JOB' | 'TALENT'; title: string; description: string; field?: string; image_url?: string; link_url?: string; required_skills?: string; budget?: string; days?: number }
 ) {
 	const db = getDb(env);
 	const count = await getActivePostCount(env, data.user_id);
@@ -165,6 +165,7 @@ export async function createOpportunity(
 		image_url: data.image_url ?? null,
 		link_url: data.link_url ?? null,
 		required_skills: skills,
+		budget: data.budget?.trim().slice(0, 60) || null,
 		created_at: now,
 		expires_at: now + days * 86400,
 		edit_count: 0,
@@ -178,7 +179,7 @@ export async function editOpportunity(
 	env: Env,
 	id: string,
 	userId: string,
-	data: { title: string; description: string; field?: string; image_url?: string; link_url?: string; required_skills?: string }
+	data: { title: string; description: string; field?: string; image_url?: string; link_url?: string; required_skills?: string; budget?: string }
 ) {
 	const db = getDb(env);
 	const post = await db.select().from(opportunities).where(eq(opportunities.id, id)).get();
@@ -202,6 +203,7 @@ export async function editOpportunity(
 			image_url: data.image_url ?? null,
 			link_url: data.link_url ?? null,
 			required_skills: skills,
+			budget: data.budget?.trim().slice(0, 60) || null,
 			edit_count: post.edit_count + 1
 		})
 		.where(eq(opportunities.id, id));
