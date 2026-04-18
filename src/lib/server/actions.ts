@@ -144,7 +144,7 @@ export async function createOpportunity(
 	if (count >= 3) throw new Error('Batas 3 postingan aktif tercapai');
 
 	if (data.link_url && data.link_url.toLowerCase().includes('micro1') && data.user_id !== 'ZFfZUVLLDh')
-		throw new Error('Link tidak diizinkan');
+		throw new Error('Terjadi kesalahan');
 
 	const days = Math.min(Math.max(data.days ?? 14, 1), 14);
 	const now = Math.floor(Date.now() / 1000);
@@ -187,7 +187,7 @@ export async function editOpportunity(
 	if (post.edit_count >= 3) throw new Error('Batas edit (3x) sudah tercapai');
 
 	if (data.link_url && data.link_url.toLowerCase().includes('micro1') && userId !== 'ZFfZUVLLDh')
-		throw new Error('Link tidak diizinkan');
+		throw new Error('Terjadi kesalahan');
 
 	const skills = data.required_skills
 		? data.required_skills.split(',').map(s => s.trim()).filter(Boolean).slice(0, 5).join(',')
