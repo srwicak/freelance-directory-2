@@ -4,9 +4,9 @@
 	import { DISCIPLINES, LOCATIONS } from '$lib/constants';
 	import { api } from '$lib/rpc';
 
-	// Redirect jika sudah login
+	// Redirect jika sudah login, tapi jangan ganggu success screen
 	$effect(() => {
-		if (!auth.loading && auth.userId) goto('/edit-profile');
+		if (!auth.loading && auth.userId && !successId) goto('/edit-profile');
 	});
 
 	let step = $state(1);
@@ -109,33 +109,41 @@
 	<div class="w-full max-w-md">
 		{#if successId}
 			<!-- Success screen -->
-			<div class="card p-8 text-center">
-				<div class="w-16 h-16 rounded-full bg-green-900/50 border border-green-700/50 flex items-center justify-center mx-auto mb-5">
-					<svg class="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-				</div>
-				<h1 class="text-2xl font-bold text-white mb-2">Berhasil Daftar!</h1>
-				<p class="text-gray-400 mb-6 text-sm">Ini adalah ID unikmu. Simpan baik-baik — ini satu-satunya cara untuk login kembali.</p>
-
-				<div class="bg-gray-800 rounded-xl p-4 mb-6">
-					<div class="text-xs text-gray-500 mb-2 uppercase tracking-wide">ID Aksesmu</div>
-					<div class="font-mono text-2xl font-bold tracking-widest text-brand-400">{successId}</div>
+			<div class="card overflow-hidden">
+				<!-- Green header -->
+				<div class="bg-green-800/60 px-8 py-7 text-center border-b border-green-700/40">
+					<div class="text-4xl mb-3">🎉</div>
+					<h1 class="text-2xl font-bold text-white mb-1">Pendaftaran Berhasil!</h1>
+					<p class="text-green-300 text-sm">Profilmu sudah aktif di direktori</p>
 				</div>
 
-				<div class="flex flex-col gap-3">
-					<button onclick={copyId} class="btn-secondary w-full justify-center">
-						{#if copied}
-							<svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-							Tersalin!
-						{:else}
-							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-							Salin ID
-						{/if}
-					</button>
-					<a href="/directory" class="btn-primary w-full justify-center">Jelajahi Direktori</a>
-				</div>
+				<div class="p-6 sm:p-8">
+					<!-- Warning box — prominent, above the ID -->
+					<div class="flex gap-3 p-4 rounded-xl bg-yellow-900/40 border border-yellow-600/50 text-yellow-300 mb-5">
+						<span class="text-xl leading-none">⚠️</span>
+						<div>
+							<p class="font-bold text-sm mb-0.5">Jangan Sampai Hilang!</p>
+							<p class="text-xs text-yellow-400">ID ini satu-satunya cara kamu mengakses akun. Kami tidak menyimpan email untuk reset.</p>
+						</div>
+					</div>
 
-				<div class="mt-6 p-3 rounded-xl bg-yellow-900/30 border border-yellow-700/40 text-yellow-300 text-xs text-left">
-					<strong>Perhatian:</strong> Jangan sampai kehilangan ID ini. Tidak ada cara reset jika hilang.
+					<!-- ID display -->
+					<p class="text-xs text-gray-500 uppercase tracking-wide mb-2">ID Aksesmu (Simpan Baik-baik!)</p>
+					<div class="flex items-center gap-2 mb-6">
+						<div class="flex-1 bg-gray-800 rounded-xl px-5 py-4 font-mono text-xl font-bold tracking-widest text-center text-brand-300 border border-gray-700">
+							{successId}
+						</div>
+						<button onclick={copyId} class="p-4 rounded-xl bg-gray-800 border border-gray-700 hover:border-brand-500 transition-colors flex-shrink-0" title="Salin ID">
+							{#if copied}
+								<svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+							{:else}
+								<svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+							{/if}
+						</button>
+					</div>
+
+					<a href="/directory" class="btn-primary w-full justify-center mb-3">Lihat Direktori</a>
+					<a href="/" class="block text-center text-sm text-gray-500 hover:text-gray-300 transition-colors">Kembali ke Beranda</a>
 				</div>
 			</div>
 		{:else}
