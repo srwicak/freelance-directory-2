@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { DISCIPLINES } from '$lib/constants';
 	import { api } from '$lib/rpc';
+	import { auth } from '$lib/auth.svelte';
 
 	type Opportunity = {
 		id: string; type: string; title: string; description: string;
@@ -186,7 +187,9 @@
 					{/if}
 
 					<!-- Description -->
-					<p class="text-sm text-gray-400 line-clamp-3 mb-3 flex-1">{item.description}</p>
+					<p class="text-sm text-gray-400 line-clamp-3 mb-3 flex-1">
+						{!auth.userId && item.type === 'JOB' ? item.description.slice(0, 20) + '...' : item.description}
+					</p>
 
 					<!-- Badges -->
 					{#if badges.length > 0}
