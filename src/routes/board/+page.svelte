@@ -106,7 +106,7 @@
 	</div>
 
 	<!-- Filter bar -->
-	<div class="bg-gray-900 border border-gray-800 rounded-2xl p-2 mb-6 flex flex-col sm:flex-row gap-2">
+	<div class="bg-gray-900 border border-gray-800 rounded-2xl p-2 mb-6 flex flex-col sm:flex-row sm:items-center gap-2">
 		<!-- Tabs -->
 		<div class="flex gap-1 p-0.5">
 			<button
