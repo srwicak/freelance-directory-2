@@ -105,39 +105,48 @@
 		</a>
 	</div>
 
-	<!-- Tabs + filter -->
-	<div class="flex flex-col sm:flex-row gap-3 mb-3">
-		<div class="flex bg-gray-900 border border-gray-800 rounded-xl p-1 gap-1">
+	<!-- Filter bar -->
+	<div class="bg-gray-900 border border-gray-800 rounded-2xl p-2 mb-6 flex flex-col sm:flex-row gap-2">
+		<!-- Tabs -->
+		<div class="flex gap-1 p-0.5">
 			<button
-				class="flex-1 px-4 py-2 rounded-lg text-sm font-semibold transition-all {activeTab === 'JOB' ? 'bg-brand-600 text-white' : 'text-gray-400 hover:text-gray-200'}"
+				class="px-4 py-2 rounded-xl text-sm font-semibold transition-all {activeTab === 'JOB' ? 'bg-brand-600 text-white shadow' : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'}"
 				onclick={() => switchTab('JOB')}
 			>Butuh Freelancer</button>
 			<button
-				class="flex-1 px-4 py-2 rounded-lg text-sm font-semibold transition-all {activeTab === 'TALENT' ? 'bg-brand-600 text-white' : 'text-gray-400 hover:text-gray-200'}"
+				class="px-4 py-2 rounded-xl text-sm font-semibold transition-all {activeTab === 'TALENT' ? 'bg-brand-600 text-white shadow' : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'}"
 				onclick={() => switchTab('TALENT')}
 			>Tawarkan Jasa</button>
 		</div>
-		<select class="select sm:w-56" bind:value={fieldFilter} onchange={() => load(true)}>
+
+		<div class="w-px bg-gray-800 hidden sm:block self-stretch my-1"></div>
+
+		<!-- Field filter -->
+		<select class="select flex-1 border-0 bg-transparent text-sm focus:ring-0 focus:outline-none" bind:value={fieldFilter} onchange={() => load(true)}>
 			<option value="">Semua Bidang</option>
 			{#each DISCIPLINES as d}
 				<option value={d}>{d}</option>
 			{/each}
 		</select>
-	</div>
 
-	<!-- Skill filter -->
-	<div class="relative mb-6">
-		<svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
-		<input
-			class="input pl-10 sm:max-w-xs"
-			type="text"
-			placeholder="Filter keahlian (mis. React, Figma...)"
-			bind:value={skillInput}
-			oninput={onSkillInput}
-		/>
-		{#if skillFilter}
-			<button class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 text-xs" onclick={() => { skillInput = ''; skillFilter = ''; load(true); }}>✕ reset</button>
-		{/if}
+		<div class="w-px bg-gray-800 hidden sm:block self-stretch my-1"></div>
+
+		<!-- Skill filter -->
+		<div class="relative flex-1">
+			<svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+			<input
+				class="w-full bg-transparent pl-9 pr-8 py-2 text-sm text-gray-100 placeholder-gray-500 outline-none"
+				type="text"
+				placeholder="Cari keahlian (React, Figma...)"
+				bind:value={skillInput}
+				oninput={onSkillInput}
+			/>
+			{#if skillFilter}
+				<button class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300" onclick={() => { skillInput = ''; skillFilter = ''; load(true); }}>
+					<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+				</button>
+			{/if}
+		</div>
 	</div>
 
 	<!-- Cards -->
