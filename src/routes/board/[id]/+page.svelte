@@ -8,9 +8,10 @@
 	type Post = {
 		id: string; type: string; title: string; description: string;
 		field: string | null; image_url: string | null; link_url: string | null;
-		required_skills: string | null; budget: string | null; created_at: number;
-		expires_at: number; edit_count: number; thumbs_up: number; thumbs_down: number;
-		user_id: string;
+		required_skills: string | null; budget: string | null;
+		project_duration: string | null; availability: string | null;
+		created_at: number; expires_at: number; edit_count: number;
+		thumbs_up: number; thumbs_down: number; user_id: string;
 		author: { id: string; name: string; field: string; province: string; city: string; linkedin: string; portfolio: string | null; details: string | null } | null;
 	};
 
@@ -30,6 +31,8 @@
 	let editImg = $state('');
 	let editLink = $state('');
 	let editBudget = $state('');
+	let editProjectDuration = $state('');
+	let editAvailability = $state('');
 	let editError = $state('');
 	let editLoading = $state(false);
 
@@ -100,6 +103,8 @@
 		editImg = post.image_url ?? '';
 		editLink = post.link_url ?? '';
 		editBudget = post.budget ?? '';
+		editProjectDuration = post.project_duration ?? '';
+		editAvailability = post.availability ?? '';
 		editTags = post.required_skills
 			? post.required_skills.split(',').map(s => s.trim()).filter(Boolean).slice(0, 5)
 			: [];
@@ -113,7 +118,14 @@
 		editError = '';
 		editLoading = true;
 		try {
-			await api.editOpportunity(postId, auth.userId as string, { title: editTitle, description: editDesc, field: editField, image_url: editImg, link_url: editLink, required_skills: editSkillsString || undefined, budget: editBudget.trim() || undefined });
+			await api.editOpportunity(postId, auth.userId as string, {
+				title: editTitle, description: editDesc, field: editField,
+				image_url: editImg, link_url: editLink,
+				required_skills: editSkillsString || undefined,
+				budget: editBudget.trim() || undefined,
+				project_duration: post?.type === 'JOB' ? (editProjectDuration || undefined) : undefined,
+				availability: post?.type === 'TALENT' ? (editAvailability || undefined) : undefined
+			});
 			const updated = await api.getOpportunityById(postId);
 			if (updated) post = updated;
 			showEdit = false;
@@ -194,9 +206,37 @@
 					</div>
 				</div>
 				<div>
-					<label class="label" for="edit-budget">Budget / Rate</label>
-					<input id="edit-budget" class="input" type="text" bind:value={editBudget} placeholder='mis. "Rp 5jt/proyek", "$50-80/jam"' maxlength="60" />
+					<label class="label" for="edit-budget">
+						{post.type === 'JOB' ? 'Budget Proyek' : 'Rate / Harga Jasa'}
+					</label>
+					<input id="edit-budget" class="input" type="text" bind:value={editBudget}
+						placeholder={post.type === 'JOB' ? 'mis. "Rp 5jt", "$500"' : 'mis. "Rp 500rb/jam", "$50/hr"'}
+						maxlength="60" />
 				</div>
+				{#if post.type === 'JOB'}
+					<div>
+						<label class="label" for="edit-proj-duration">Durasi Proyek</label>
+						<select id="edit-proj-duration" class="select" bind:value={editProjectDuration}>
+							<option value="">-- Pilih Durasi --</option>
+							<option value="< 1 minggu">Kurang dari 1 minggu</option>
+							<option value="1–4 minggu">1–4 minggu</option>
+							<option value="1–3 bulan">1–3 bulan</option>
+							<option value="> 3 bulan">Lebih dari 3 bulan</option>
+							<option value="Ongoing">Ongoing / Jangka panjang</option>
+						</select>
+					</div>
+				{:else}
+					<div>
+						<label class="label" for="edit-availability">Ketersediaan</label>
+						<select id="edit-availability" class="select" bind:value={editAvailability}>
+							<option value="">-- Pilih Ketersediaan --</option>
+							<option value="Full-time">Full-time</option>
+							<option value="Part-time">Part-time</option>
+							<option value="Per Proyek">Per Proyek</option>
+							<option value="Fleksibel">Fleksibel</option>
+						</select>
+					</div>
+				{/if}
 				<div>
 					<label class="label" for="edit-link">Link Pekerjaan</label>
 					<input id="edit-link" class="input" type="url" bind:value={editLink} placeholder="https://..." />
@@ -270,11 +310,27 @@
 
 			<h1 class="text-2xl font-bold text-white mb-3">{post.title}</h1>
 
-			<!-- Budget -->
-			{#if post.budget}
-				<div class="inline-flex items-center gap-1.5 mb-4 px-3 py-1.5 rounded-lg bg-green-900/30 border border-green-700/40 text-green-300 text-sm font-medium">
-					<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-					{post.budget}
+			<!-- Budget + meta chips -->
+			{#if post.budget || post.project_duration || post.availability}
+				<div class="flex flex-wrap gap-2 mb-4">
+					{#if post.budget}
+						<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-900/30 border border-green-700/40 text-green-300 text-sm font-medium">
+							<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+							{post.budget}
+						</span>
+					{/if}
+					{#if post.project_duration}
+						<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-900/30 border border-blue-700/40 text-blue-300 text-sm font-medium">
+							<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+							{post.project_duration}
+						</span>
+					{/if}
+					{#if post.availability}
+						<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-900/30 border border-purple-700/40 text-purple-300 text-sm font-medium">
+							<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+							{post.availability}
+						</span>
+					{/if}
 				</div>
 			{/if}
 
@@ -325,7 +381,7 @@
 						class="inline-flex items-center gap-2 mb-5 px-4 py-2.5 rounded-xl bg-brand-900/40 border border-brand-700/50 text-brand-300 text-sm hover:bg-brand-900/60 transition-colors"
 					>
 						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-						Lihat Detail Pekerjaan
+						{post.type === 'JOB' ? 'Lihat Brief / Detail Pekerjaan' : 'Lihat Portfolio'}
 					</a>
 				{/if}
 			{/if}

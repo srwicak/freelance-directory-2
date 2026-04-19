@@ -25,6 +25,8 @@ export const opportunities = sqliteTable('opportunities', {
 	link_url: text('link_url'),
 	required_skills: text('required_skills'), // comma-separated, max 5
 	budget: text('budget'),
+	project_duration: text('project_duration'), // JOB only
+	availability: text('availability'),         // TALENT only
 	created_at: integer('created_at').notNull().default(sql`(unixepoch())`),
 	expires_at: integer('expires_at').notNull(),
 	edit_count: integer('edit_count').notNull().default(0),

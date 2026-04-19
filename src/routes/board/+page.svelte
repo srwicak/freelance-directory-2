@@ -7,8 +7,10 @@
 	type Opportunity = {
 		id: string; type: string; title: string; description: string;
 		field: string | null; image_url: string | null; link_url: string | null;
-		required_skills: string | null; budget: string | null; created_at: number;
-		expires_at: number; edit_count: number; thumbs_up: number; thumbs_down: number;
+		required_skills: string | null; budget: string | null;
+		project_duration: string | null; availability: string | null;
+		created_at: number; expires_at: number; edit_count: number;
+		thumbs_up: number; thumbs_down: number;
 		user_id: string; author_name: string; author_field: string; author_province: string;
 	};
 
@@ -190,9 +192,19 @@
 					<!-- Title -->
 					<h3 class="font-semibold text-gray-100 mb-2 line-clamp-2 leading-snug">{item.title}</h3>
 
-					<!-- Budget -->
-					{#if item.budget}
-						<p class="text-xs text-green-400 font-medium mb-2">{item.budget}</p>
+					<!-- Budget + duration/availability chips -->
+					{#if item.budget || item.project_duration || item.availability}
+						<div class="flex flex-wrap gap-1.5 mb-2">
+							{#if item.budget}
+								<span class="text-xs text-green-400 font-medium">{item.budget}</span>
+							{/if}
+							{#if item.project_duration}
+								<span class="text-xs text-blue-400">· {item.project_duration}</span>
+							{/if}
+							{#if item.availability}
+								<span class="text-xs text-purple-400">· {item.availability}</span>
+							{/if}
+						</div>
 					{/if}
 
 					<!-- Description -->

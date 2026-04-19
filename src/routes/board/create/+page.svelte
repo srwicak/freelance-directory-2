@@ -11,6 +11,8 @@
 	let image_url = $state('');
 	let link_url = $state('');
 	let budget = $state('');
+	let project_duration = $state('');
+	let availability = $state('');
 	let days = $state(14);
 	let loading = $state(false);
 	let error = $state('');
@@ -80,6 +82,8 @@
 				link_url: link_url.trim() || undefined,
 				required_skills: skillsString || undefined,
 				budget: budget.trim() || undefined,
+				project_duration: type === 'JOB' ? (project_duration || undefined) : undefined,
+				availability: type === 'TALENT' ? (availability || undefined) : undefined,
 				days
 			});
 			goto(`/board/${res.id}`);
@@ -130,38 +134,44 @@
 			<div class="p-3 rounded-xl bg-red-900/40 border border-red-700/50 text-red-300 text-sm">{error}</div>
 		{/if}
 
-		<!-- Type -->
+		<!-- Type toggle -->
 		<div>
 			<fieldset>
-		<legend class="label">Tipe Postingan</legend>
-			<div class="flex bg-gray-800 rounded-xl p-1 gap-1">
-				<button
-					class="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all {type === 'JOB' ? 'bg-brand-600 text-white' : 'text-gray-400 hover:text-gray-200'}"
-					onclick={() => (type = 'JOB')}
-				>Butuh Freelancer</button>
-				<button
-					class="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all {type === 'TALENT' ? 'bg-brand-600 text-white' : 'text-gray-400 hover:text-gray-200'}"
-					onclick={() => (type = 'TALENT')}
-				>Tawarkan Jasa</button>
-			</div>
-		</fieldset>
+				<legend class="label">Tipe Postingan</legend>
+				<div class="flex bg-gray-800 rounded-xl p-1 gap-1">
+					<button
+						class="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all {type === 'JOB' ? 'bg-brand-600 text-white' : 'text-gray-400 hover:text-gray-200'}"
+						onclick={() => (type = 'JOB')}
+					>Butuh Freelancer</button>
+					<button
+						class="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all {type === 'TALENT' ? 'bg-brand-600 text-white' : 'text-gray-400 hover:text-gray-200'}"
+						onclick={() => (type = 'TALENT')}
+					>Tawarkan Jasa</button>
+				</div>
+			</fieldset>
 		</div>
 
 		<!-- Title -->
 		<div>
 			<label class="label" for="title">Judul <span class="text-red-400">*</span></label>
-			<input id="title" class="input" type="text" bind:value={title} placeholder={type === 'JOB' ? 'e.g. Butuh Web Developer React.js' : 'e.g. Desainer Logo & Brand Identity'} maxlength="150" />
+			<input id="title" class="input" type="text" bind:value={title}
+				placeholder={type === 'JOB' ? 'e.g. Butuh Web Developer React.js' : 'e.g. Desainer Logo & Brand Identity'}
+				maxlength="150" />
 			<p class="text-xs text-gray-500 mt-1">{title.length}/150</p>
 		</div>
 
 		<!-- Description -->
 		<div>
 			<label class="label" for="desc">Deskripsi <span class="text-red-400">*</span></label>
-			<textarea id="desc" class="textarea" rows="6" bind:value={description} placeholder={type === 'JOB' ? 'Jelaskan kebutuhan proyek, budget, timeline, dll...' : 'Jelaskan layanan, keahlian, harga, dan cara menghubungimu...'} maxlength="3000"></textarea>
+			<textarea id="desc" class="textarea" rows="6" bind:value={description}
+				placeholder={type === 'JOB'
+					? 'Jelaskan kebutuhan proyek, scope pekerjaan, timeline, dan cara melamar...'
+					: 'Jelaskan layanan yang kamu tawarkan, pengalaman, proses kerja, dan cara menghubungimu...'}
+				maxlength="3000"></textarea>
 			<p class="text-xs text-gray-500 mt-1">{description.length}/3000</p>
 		</div>
 
-		<!-- Field -->
+		<!-- Kategori -->
 		<div>
 			<label class="label" for="field">Kategori Keahlian <span class="text-gray-500 text-xs">(opsional)</span></label>
 			<select id="field" class="select" bind:value={field}>
@@ -172,21 +182,7 @@
 			</select>
 		</div>
 
-		<!-- Budget -->
-		<div>
-			<label class="label" for="budget">Budget / Rate <span class="text-gray-500 text-xs">(opsional)</span></label>
-			<input id="budget" class="input" type="text" bind:value={budget} placeholder='mis. "Rp 5jt/proyek", "$50-80/jam", "Nego"' maxlength="60" />
-			<p class="text-xs text-gray-500 mt-1">{budget.length}/60</p>
-		</div>
-
-		<!-- Link URL -->
-		<div>
-			<label class="label" for="link">Link Pekerjaan <span class="text-gray-500 text-xs">(opsional)</span></label>
-			<input id="link" class="input" type="url" bind:value={link_url} placeholder="https://..." />
-			<p class="text-xs text-gray-500 mt-1">Link ke detail proyek, brief, atau halaman rekrutmen</p>
-		</div>
-
-		<!-- Required Skills -->
+		<!-- Skills -->
 		<div>
 			<label class="label" for="tag-input">
 				{type === 'JOB' ? 'Keahlian yang Dibutuhkan' : 'Keahlian yang Ditawarkan'}
@@ -215,6 +211,59 @@
 			</div>
 		</div>
 
+		<!-- Budget (label berbeda per tipe) -->
+		<div>
+			<label class="label" for="budget">
+				{type === 'JOB' ? 'Budget Proyek' : 'Rate / Harga Jasa'}
+				<span class="text-gray-500 text-xs">(opsional)</span>
+			</label>
+			<input id="budget" class="input" type="text" bind:value={budget}
+				placeholder={type === 'JOB' ? 'mis. "Rp 5jt", "$500-1000", "Nego"' : 'mis. "Rp 500rb/jam", "$50/hr", "Rp 3jt/proyek"'}
+				maxlength="60" />
+			<p class="text-xs text-gray-500 mt-1">{budget.length}/60</p>
+		</div>
+
+		<!-- JOB-only: Durasi Proyek -->
+		{#if type === 'JOB'}
+			<div>
+				<label class="label" for="proj-duration">Durasi Proyek <span class="text-gray-500 text-xs">(opsional)</span></label>
+				<select id="proj-duration" class="select" bind:value={project_duration}>
+					<option value="">-- Pilih Durasi --</option>
+					<option value="< 1 minggu">Kurang dari 1 minggu</option>
+					<option value="1–4 minggu">1–4 minggu</option>
+					<option value="1–3 bulan">1–3 bulan</option>
+					<option value="> 3 bulan">Lebih dari 3 bulan</option>
+					<option value="Ongoing">Ongoing / Jangka panjang</option>
+				</select>
+			</div>
+		{/if}
+
+		<!-- TALENT-only: Ketersediaan -->
+		{#if type === 'TALENT'}
+			<div>
+				<label class="label" for="availability">Ketersediaan <span class="text-gray-500 text-xs">(opsional)</span></label>
+				<select id="availability" class="select" bind:value={availability}>
+					<option value="">-- Pilih Ketersediaan --</option>
+					<option value="Full-time">Full-time</option>
+					<option value="Part-time">Part-time</option>
+					<option value="Per Proyek">Per Proyek</option>
+					<option value="Fleksibel">Fleksibel</option>
+				</select>
+			</div>
+		{/if}
+
+		<!-- Link (label berbeda per tipe) -->
+		<div>
+			<label class="label" for="link">
+				{type === 'JOB' ? 'Link Brief / Pekerjaan' : 'Link Portfolio'}
+				<span class="text-gray-500 text-xs">(opsional)</span>
+			</label>
+			<input id="link" class="input" type="url" bind:value={link_url} placeholder="https://..." />
+			<p class="text-xs text-gray-500 mt-1">
+				{type === 'JOB' ? 'Link ke detail proyek, brief, atau halaman rekrutmen' : 'Link ke portfolio, Behance, Dribbble, atau website kamu'}
+			</p>
+		</div>
+
 		<!-- Image URL -->
 		<div>
 			<label class="label" for="img">URL Gambar <span class="text-gray-500 text-xs">(opsional)</span></label>
@@ -222,7 +271,7 @@
 			<p class="text-xs text-gray-500 mt-1">Upload ke ImgBB atau layanan serupa, lalu paste URL-nya</p>
 		</div>
 
-		<!-- Days -->
+		<!-- Durasi Tayang -->
 		<div>
 			<label class="label" for="days-range">Durasi Tayang: <span class="text-brand-400">{days} hari</span></label>
 			<input id="days-range" type="range" min="1" max="14" bind:value={days} class="w-full accent-brand-500" />
